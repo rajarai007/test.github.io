@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Classic Intranet — Bug Report</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0d0f12;
+  --surface: #141720;
+  --surface2: #1c2030;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #e8eaf0;
+  --muted: #6b7280;
+  --accent: #4f8ef7;
+  --open: #f87171;
+  --open-bg: rgba(248,113,113,0.1);
+  --reopen: #fb923c;
+  --reopen-bg: rgba(251,146,60,0.1);
+  --fixed: #4ade80;
+  --fixed-bg: rgba(74,222,128,0.1);
+  --dup: #94a3b8;
+  --dup-bg: rgba(148,163,184,0.1);
+  --be: #60a5fa;
+  --be-bg: rgba(96,165,250,0.1);
+  --fe: #c084fc;
+  --fe-bg: rgba(192,132,252,0.1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* noise overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+/* ── HEADER ── */
+header {
+  padding: 48px 0 36px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 36px;
+}
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.project-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  background: rgba(79,142,247,0.1);
+  border: 1px solid rgba(79,142,247,0.2);
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.project-tag::before { content: '●'; font-size: 8px; }
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+h1 span { color: var(--accent); }
+.header-meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 10px;
+  font-family: 'DM Mono', monospace;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.header-meta span::before { content: '/ '; opacity: 0.4; }
+.generated-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.generated-badge .ai-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.generated-badge .date {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ── METRICS ── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 32px;
+}
+.metric {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.metric:hover { border-color: var(--border2); }
+.metric::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 10px 10px 0 0;
+}
+.metric.total::after { background: var(--accent); }
+.metric.m-open::after { background: var(--open); }
+.metric.m-reopen::after { background: var(--reopen); }
+.metric.m-fixed::after { background: var(--fixed); }
+.metric-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  margin-bottom: 8px;
+}
+.metric-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+}
+.metric.total .metric-val { color: #fff; }
+.metric.m-open .metric-val { color: var(--open); }
+.metric.m-reopen .metric-val { color: var(--reopen); }
+.metric.m-fixed .metric-val { color: var(--fixed); }
+.metric-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+/* ── FILTERS ── */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  align-items: center;
+}
+.filter-label {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-right: 4px;
+}
+.filter-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: all 0.15s;
+  text-transform: uppercase;
+}
+.filter-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+.filter-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ── TABLE ── */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+col.c-id { width: 46px; }
+col.c-date { width: 96px; }
+col.c-desc { width: auto; }
+col.c-env { width: 72px; }
+col.c-status { width: 108px; }
+col.c-src { width: 80px; }
+col.c-remark { width: 140px; }
+
+thead tr {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+thead th {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 12px 14px;
+  text-align: left;
+}
+tbody tr.data-row {
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+  animation: fadeIn 0.3s ease both;
+}
+tbody tr.data-row:last-of-type { border-bottom: none; }
+tbody tr.data-row:hover { background: var(--surface2); }
+tbody td {
+  padding: 12px 14px;
+  vertical-align: middle;
+  color: var(--text);
+  font-size: 13px;
+}
+.id-cell {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+.date-cell {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.desc-cell { font-size: 12.5px; line-height: 1.5; }
+.desc-cell .chevron {
+  display: inline-block;
+  font-size: 9px;
+  color: var(--muted);
+  margin-left: 6px;
+  transition: transform 0.2s;
+}
+.desc-cell .chevron.open { transform: rotate(180deg); }
+.env-cell { font-size: 11px; font-family: 'DM Mono', monospace; }
+.env-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; }
+.env-dot.on { background: var(--fixed); }
+.env-dot.off { background: var(--muted); opacity: 0.4; }
+
+/* badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.badge-open { background: var(--open-bg); color: var(--open); border: 1px solid rgba(248,113,113,0.2); }
+.badge-reopen { background: var(--reopen-bg); color: var(--reopen); border: 1px solid rgba(251,146,60,0.2); }
+.badge-fixed { background: var(--fixed-bg); color: var(--fixed); border: 1px solid rgba(74,222,128,0.2); }
+.badge-dup { background: var(--dup-bg); color: var(--dup); border: 1px solid rgba(148,163,184,0.2); }
+.badge-reports { background: rgba(251,146,60,0.1); color: var(--reopen); border: 1px solid rgba(251,146,60,0.2); }
+.badge-be { background: var(--be-bg); color: var(--be); border: 1px solid rgba(96,165,250,0.2); }
+.badge-fe { background: var(--fe-bg); color: var(--fe); border: 1px solid rgba(192,132,252,0.2); }
+
+.remark-cell { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+/* expand row */
+tr.expand-row { display: none; }
+tr.expand-row td {
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  background: #10131a;
+}
+.expand-inner { padding: 16px 20px; }
+.expand-section-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.expand-section-title::before { content: '▸'; }
+pre.curl-block {
+  font-family: 'DM Mono', monospace;
+  font-size: 11.5px;
+  color: #a5f3fc;
+  background: #070a0f;
+  border: 1px solid rgba(96,165,250,0.15);
+  border-radius: 8px;
+  padding: 14px 16px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.7;
+  max-height: 180px;
+  overflow-y: auto;
+}
+pre.curl-block::-webkit-scrollbar { width: 4px; }
+pre.curl-block::-webkit-scrollbar-track { background: transparent; }
+pre.curl-block::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.remark-box {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  border-left: 2px solid var(--border2);
+}
+.remark-box strong { color: var(--text); font-weight: 500; }
+
+/* empty state */
+.empty { text-align: center; padding: 48px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px; }
+
+/* footer */
+footer {
+  margin-top: 48px;
+  padding: 24px 0 32px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.footer-left { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+.footer-right { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.05em; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 680px) {
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+  col.c-remark, col.c-env { width: 0; }
+  .remark-cell, .env-cell { display: none; }
+  h1 { font-size: 26px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-top">
+      <div>
+        <div class="project-tag">Classic Intranet</div>
+        <h1>Bug <span>Report</span></h1>
+        <div class="header-meta">
+          <span>QA Testing Cycle</span>
+          <span>31 Mar – 06 Apr 2026</span>
+          <span>15 Issues Logged</span>
+        </div>
+      </div>
+      <div class="generated-badge">
+        <div class="ai-label">Generated</div>
+        <div class="date">07 Apr 2026</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="metrics">
+    <div class="metric total">
+      <div class="metric-label">Total Bugs</div>
+      <div class="metric-val">15</div>
+      <div class="metric-sub">across all modules</div>
+    </div>
+    <div class="metric m-open">
+      <div class="metric-label">Open</div>
+      <div class="metric-val" id="m-open-val">—</div>
+      <div class="metric-sub">needs action</div>
+    </div>
+    <div class="metric m-reopen">
+      <div class="metric-label">Reopened</div>
+      <div class="metric-val" id="m-reopen-val">—</div>
+      <div class="metric-sub">regression on live</div>
+    </div>
+    <div class="metric m-fixed">
+      <div class="metric-label">Fixed</div>
+      <div class="metric-val" id="m-fixed-val">—</div>
+      <div class="metric-sub">resolved / closed</div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <span class="filter-label">Filter:</span>
+    <button class="filter-btn active" data-f="all">All</button>
+    <button class="filter-btn" data-f="open">Open</button>
+    <button class="filter-btn" data-f="reopen">Reopened</button>
+    <button class="filter-btn" data-f="fixed">Fixed</button>
+    <button class="filter-btn" data-f="dup">Duplicate</button>
+    <button class="filter-btn" data-f="be">Backend</button>
+    <button class="filter-btn" data-f="fe">Frontend</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <colgroup>
+        <col class="c-id"/><col class="c-date"/><col class="c-desc"/>
+        <col class="c-env"/><col class="c-status"/><col class="c-src"/><col class="c-remark"/>
+      </colgroup>
+      <thead>
+        <tr>
+          <th>#</th><th>Date</th><th>Description</th>
+          <th>Env</th><th>Status</th><th>Source</th><th>Dev Remark</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    <div class="footer-left">classic_intranet / bug-report-2026.html</div>
+    <div class="footer-right">↓ Click any row to view cURL &amp; details</div>
+  </footer>
+
+</div>
+
+<script>
+const bugs = [
+  {id:1,date:"31-03-26",desc:"Dashboard › User Management — switching to Roles page: roles not highlighted",staging:true,live:true,status:"open",src:"be",remark:"Frontend issue",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/roles' \\\n  -H 'Accept: application/json, text/plain, */*' \\\n  -H 'Authorization: Bearer 1733|jVRv9dUwq4zdB2ZPg7z64mfWBk3mEyEpYx7XziMpea56167c' \\\n  -H 'Referer: http://104.237.3.13/user_management' \\\n  --insecure`},
+  {id:2,date:"31-03-26",desc:"User Management — Send Reset Password Link button returns error",staging:true,live:false,status:"fixed",src:"be",remark:"Fixed and live on staging",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/password/email' \\\n  -H 'Authorization: Bearer 1733|jVRv9dUwq4zdB2ZPg7z64mfWBk3mEyEpYx7XziMpea56167c' \\\n  -H 'Content-Type: application/json' \\\n  --data-raw '{"email":"aryantales@gmail.com"}' \\\n  --insecure`},
+  {id:3,date:"31-03-26",desc:"Quotation export via Direct Download throws 403 Invalid Signature",staging:true,live:false,status:"fixed",src:"be",remark:"Fixed and live on staging",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/quotations/download-pdf/11194' \\\n  -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9' \\\n  -H 'Cache-Control: max-age=0' \\\n  --insecure`},
+  {id:4,date:"31-03-26",desc:"Quote Summary page shows 'No data found' despite products being added to the quote",staging:true,live:false,status:"fixed",src:"be",remark:"Fixed and live on staging",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/quotation/products' \\\n  -H 'Authorization: Bearer 1734|trNmJFhwzsIgDHFQgP7o4xqxI92D9QHvYc30MLk65ef1faf4' \\\n  --data-raw '{"quotation_id":"9759","page":1,"limit":10,"filter":""}' \\\n  --insecure`},
+  {id:5,date:"01-04-26",desc:"Dashboard — Confirmed Orders count incorrect: API returns 292, actual count is 87",staging:true,live:true,status:"reopen",src:"be",remark:"Fixed on staging but issue persists on live",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/get-dashboard-data' \\\n  -H 'Authorization: Bearer 1733|jVRv9dUwq4zdB2ZPg7z64mfWBk3mEyEpYx7XziMpea56167c' \\\n  -H 'Referer: http://104.237.3.13/' \\\n  --insecure`},
+  {id:6,date:"01-04-26",desc:"Dashboard — Outstanding Items count incorrect: shows 8479, actual is 2636",staging:true,live:true,status:"reopen",src:"be",remark:"Fixed on staging but issue persists on live",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/get-dashboard-data' \\\n  -H 'Authorization: Bearer 1733|jVRv9dUwq4zdB2ZPg7z64mfWBk3mEyEpYx7XziMpea56167c' \\\n  --insecure`},
+  {id:7,date:"01-04-26",desc:"Dashboard — Quotes By Customer count static/incorrect (mirrors live server data)",staging:true,live:true,status:"reopen",src:"be",remark:"Fixed on staging but issue persists on live",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/get-dashboard-data' \\\n  -H 'Authorization: Bearer 1733|jVRv9dUwq4zdB2ZPg7z64mfWBk3mEyEpYx7XziMpea56167c' \\\n  --insecure`},
+  {id:8,date:"01-04-26",desc:"Dashboard — Export Status count incorrect: shows 292, actual is 87",staging:true,live:true,status:"reports",src:"be",remark:"Working as expected (per dev)",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/get-dashboard-data' \\\n  -H 'Authorization: Bearer 1733|jVRv9dUwq4zdB2ZPg7z64mfWBk3mEyEpYx7XziMpea56167c' \\\n  --insecure`},
+  {id:9,date:"01-04-26",desc:"Dashboard › Products — export throws 'Something went wrong while exporting'",staging:true,live:true,status:"reopen",src:"be",remark:"Fixed on staging but issue persists on live",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/products/export_excel' \\\n  -H 'Authorization: Bearer 1733|jVRv9dUwq4zdB2ZPg7z64mfWBk3mEyEpYx7XziMpea56167c' \\\n  --insecure`},
+  {id:10,date:"02-04-26",desc:"Quotation › Client Details — Address textarea resize broken; Address2 overlaps border",staging:true,live:true,status:"open",src:"fe",remark:"Front-end UI issue",curl:null},
+  {id:11,date:"02-04-26",desc:"Dashboard Export Status count incorrect (duplicate of Bug #8)",staging:true,live:false,status:"dup",src:"be",remark:"Duplicate of Bug #8",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/get-dashboard-data' \\\n  -H 'Authorization: Bearer 1734|trNmJFhwzsIgDHFQgP7o4xqxI92D9QHvYc30MLk65ef1faf4' \\\n  --insecure`},
+  {id:12,date:"02-04-26",desc:"Quotation › Settings tab — no Save/Submit button after filling Document, Address, Created By",staging:true,live:true,status:"open",src:"fe",remark:"",curl:null},
+  {id:13,date:"03-04-26",desc:"Quotation › All Products section shows 'Data not found' instead of product listing",staging:true,live:false,status:"open",src:"be",remark:"",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/products/frequently_used_product_list' \\\n  -H 'Authorization: Bearer 1746|FWXIZooqeiz0Lc7vmLjawFqrSv5dltKRRS9uehoQ9b9a8108' \\\n  --data-raw '{"page":1,"limit":10,"filter":null}' \\\n  --insecure`},
+  {id:14,date:"06-04-26",desc:"Quotation — switching Favourites → All Products still shows favourite list",staging:true,live:false,status:"open",src:"be",remark:"",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/products/frequently_used_product_list' \\\n  -H 'Authorization: Bearer 1746|FWXIZooqeiz0Lc7vmLjawFqrSv5dltKRRS9uehoQ9b9a8108' \\\n  --data-raw '{"page":1,"limit":10,"filter":null}' \\\n  --insecure`},
+  {id:15,date:"06-04-26",desc:"Quotation — searching favourite products in search bar not working",staging:true,live:false,status:"open",src:"be",remark:"",curl:`curl 'http://104.237.3.13/classic_intranet_backend/public/api/products/frequently_used_product_list' \\\n  -H 'Authorization: Bearer 1746|FWXIZooqeiz0Lc7vmLjawFqrSv5dltKRRS9uehoQ9b9a8108' \\\n  --data-raw '{"page":1,"limit":10,"filter":"Geb"}' \\\n  --insecure`},
+];
+
+const statusMap = {
+  open: {label:'Open', cls:'badge-open'},
+  fixed: {label:'Fixed', cls:'badge-fixed'},
+  reopen: {label:'Reopened', cls:'badge-reopen'},
+  dup: {label:'Duplicate', cls:'badge-dup'},
+  reports: {label:'Reported', cls:'badge-reports'},
+};
+const srcMap = {
+  be: {label:'Backend', cls:'badge-be'},
+  fe: {label:'Frontend', cls:'badge-fe'},
+};
+
+function countWhere(fn){ return bugs.filter(fn).length; }
+document.getElementById('m-open-val').textContent = countWhere(b=>b.status==='open');
+document.getElementById('m-reopen-val').textContent = countWhere(b=>b.status==='reopen');
+document.getElementById('m-fixed-val').textContent = countWhere(b=>b.status==='fixed');
+
+let activeFilter = 'all';
+const filters = {
+  all: ()=>true,
+  open: b=>b.status==='open',
+  reopen: b=>b.status==='reopen',
+  fixed: b=>b.status==='fixed',
+  dup: b=>b.status==='dup',
+  be: b=>b.src==='be',
+  fe: b=>b.src==='fe',
+};
+
+function render(){
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  const list = bugs.filter(filters[activeFilter]);
+  if(!list.length){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="7"><div class="empty">No bugs match this filter.</div></td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+  list.forEach((b, i) => {
+    const st = statusMap[b.status] || statusMap.open;
+    const sr = srcMap[b.src] || srcMap.be;
+    const tr = document.createElement('tr');
+    tr.className = 'data-row';
+    tr.style.animationDelay = (i*30)+'ms';
+    tr.innerHTML = `
+      <td class="id-cell">${String(b.id).padStart(2,'0')}</td>
+      <td class="date-cell">${b.date}</td>
+      <td class="desc-cell">${b.desc}<span class="chevron" id="ch${b.id}">▼</span></td>
+      <td class="env-cell">
+        <span class="env-dot ${b.staging?'on':'off'}"></span>S&nbsp;
+        <span class="env-dot ${b.live?'on':'off'}"></span>L
+      </td>
+      <td><span class="badge ${st.cls}">${st.label}</span></td>
+      <td><span class="badge ${sr.cls}">${sr.label}</span></td>
+      <td class="remark-cell">${b.remark||'—'}</td>
+    `;
+    const exp = document.createElement('tr');
+    exp.className = 'expand-row';
+    exp.id = 'exp'+b.id;
+    const curlHtml = b.curl
+      ? `<div class="expand-section-title">API endpoint (cURL)</div><pre class="curl-block">${b.curl}</pre>`
+      : `<p style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;">No API call — frontend-only issue</p>`;
+    const remarkHtml = b.remark
+      ? `<div class="remark-box"><strong>Dev remark:</strong> ${b.remark}</div>`
+      : '';
+    exp.innerHTML = `<td colspan="7"><div class="expand-inner">${curlHtml}${remarkHtml}</div></td>`;
+
+    tr.addEventListener('click', () => {
+      const row = document.getElementById('exp'+b.id);
+      const ch = document.getElementById('ch'+b.id);
+      const isOpen = row.style.display === 'table-row';
+      row.style.display = isOpen ? 'none' : 'table-row';
+      ch.classList.toggle('open', !isOpen);
+    });
+    tbody.appendChild(tr);
+    tbody.appendChild(exp);
+  });
+}
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.f;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>
